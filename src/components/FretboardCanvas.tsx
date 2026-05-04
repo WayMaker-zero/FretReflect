@@ -10,7 +10,7 @@ const STRING_COLOR = 0xb8a99a
 const NUT_COLOR = 0xf5f0eb
 const FRETBOARD_WIDTH = 800
 const FRETBOARD_HEIGHT = 320
-const LEFT_MARGIN = 80
+const LEFT_MARGIN = 120
 const TOP_MARGIN = 32
 const BOTTOM_MARGIN = 16
 
@@ -228,7 +228,7 @@ function drawFretboard(app: Application) {
     const y = TOP_MARGIN + s * stringGap
     const label = new Text({ text: stringLabels[s], style: stringLabelStyle })
     label.anchor.set(1, 0.5)
-    label.x = LEFT_MARGIN - 36
+    label.x = LEFT_MARGIN - 78
     label.y = y
     container.addChild(label)
   }
@@ -260,6 +260,19 @@ function drawFretboard(app: Application) {
 function drawChordOverlay(container: Container, chord: ChordDefinition) {
   const { fingering } = chord
 
+  const nameStyle = new TextStyle({
+    fontSize: 12,
+    fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+    fontWeight: "700",
+    fill: "#f59e0b",
+    align: "right",
+  })
+  const nameText = new Text({ text: chord.name, style: nameStyle })
+  nameText.anchor.set(1, 0)
+  nameText.x = LEFT_MARGIN + fretAreaWidth
+  nameText.y = TOP_MARGIN - 6
+  container.addChild(nameText)
+
   for (let i = 0; i < 6; i++) {
     const fretValue = fingering[i]
     const y = TOP_MARGIN + i * stringGap
@@ -268,28 +281,17 @@ function drawChordOverlay(container: Container, chord: ChordDefinition) {
       const x = LEFT_MARGIN + fretValue * fretWidth - fretWidth / 2
 
       const ring = new Graphics()
-      ring.circle(x, y, 10)
-      ring.stroke({ color: CHORD_MARKER_COLOR, width: 2, alpha: CHORD_MARKER_ALPHA })
+      ring.circle(x, y, 13)
+      ring.stroke({ color: CHORD_MARKER_COLOR, width: 2.5, alpha: CHORD_MARKER_ALPHA })
       container.addChild(ring)
 
-      const dot = new Graphics()
-      dot.circle(x, y, 4)
-      dot.fill({ color: CHORD_MARKER_COLOR, alpha: CHORD_MARKER_ALPHA })
-      container.addChild(dot)
-
     } else if (fretValue === 0) {
-      const indicatorStyle = new TextStyle({
-        fontSize: 14,
-        fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
-        fontWeight: "700",
-        fill: "#f59e0b",
-        align: "center",
-      })
-      const indicator = new Text({ text: "○", style: indicatorStyle })
-      indicator.anchor.set(0.5)
-      indicator.x = LEFT_MARGIN - 20
-      indicator.y = y
-      container.addChild(indicator)
+      const x = LEFT_MARGIN - fretWidth / 2
+
+      const ring = new Graphics()
+      ring.circle(x, y, 14)
+      ring.stroke({ color: CHORD_MARKER_COLOR, width: 2.5, alpha: CHORD_MARKER_ALPHA })
+      container.addChild(ring)
 
     } else if (fretValue === null) {
       const indicatorStyle = new TextStyle({
@@ -301,7 +303,7 @@ function drawChordOverlay(container: Container, chord: ChordDefinition) {
       })
       const indicator = new Text({ text: "✕", style: indicatorStyle })
       indicator.anchor.set(0.5)
-      indicator.x = LEFT_MARGIN - 20
+      indicator.x = LEFT_MARGIN - 58
       indicator.y = y
       container.addChild(indicator)
     }
