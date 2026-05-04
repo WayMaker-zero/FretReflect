@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react"
 import { Application, Graphics, Text, TextStyle, Container } from "pixi.js"
 import { getAllFretNotes, FRET_COUNT } from "../constants/tuning"
 import { getNoteColor } from "../utils/fretboard"
-import type { FretNote } from "../types"
 
 const FRETBOARD_COLOR = 0x5c3a21
 const FRET_COLOR = 0xd4c5b9
@@ -10,7 +9,7 @@ const STRING_COLOR = 0xb8a99a
 const NUT_COLOR = 0xf5f0eb
 const FRETBOARD_WIDTH = 800
 const FRETBOARD_HEIGHT = 320
-const LEFT_MARGIN = 60
+const LEFT_MARGIN = 80
 const TOP_MARGIN = 32
 const BOTTOM_MARGIN = 16
 
@@ -71,7 +70,7 @@ export default function FretboardCanvas() {
           className="min-w-[800px] flex justify-center"
         />
         <p className="text-center text-xs text-stone-400 mt-2">
-          横向 = 品丝　纵向 = 琴弦(上1弦最细 → 下6弦最粗)　圆圈内为音名
+          横向 = 品丝　纵向 = 琴弦(上1弦最细 → 下6弦最粗)　左侧方形 = 空弦音
         </p>
       </div>
     </section>
@@ -136,10 +135,10 @@ function drawFretboard(app: Application) {
     }
   }
 
-  const noteStyle = new TextStyle({
-    fontSize: 9,
+  const fret0TextStyle = new TextStyle({
+    fontSize: 11,
     fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
-    fontWeight: "600",
+    fontWeight: "700",
     fill: "#ffffff",
     align: "center",
   })
@@ -151,19 +150,41 @@ function drawFretboard(app: Application) {
     for (let f = 0; f <= FRET_COUNT; f++) {
       const note = stringNotes[f]
       const x = LEFT_MARGIN + f * fretWidth - fretWidth / 2
-      const color = getNoteColor(note.note)
+      const cssColor = getNoteColor(note.note)
 
-      const bg = new Graphics()
-      const radius = 9
-      bg.circle(x, y, radius)
-      bg.fill(color)
-      container.addChild(bg)
+      if (f === 0) {
+        const boxSize = 22
+        const box = new Graphics()
+        box.roundRect(x - boxSize / 2, y - boxSize / 2, boxSize, boxSize, 5)
+        box.fill(cssHexToNumber(cssColor))
+        box.stroke({ color: 0xffffff, width: 1 })
+        container.addChild(box)
 
-      const text = new Text({ text: formatNoteLabel(note), style: noteStyle })
-      text.anchor.set(0.5)
-      text.x = x
-      text.y = y
-      container.addChild(text)
+        const text = new Text({
+          text: note.note.replace("#", "♯"),
+          style: fret0TextStyle,
+        })
+        text.anchor.set(0.5)
+        text.x = x
+        text.y = y
+        container.addChild(text)
+      } else {
+        const textStyle = new TextStyle({
+          fontSize: 14,
+          fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+          fontWeight: "700",
+          fill: cssColor,
+          align: "center",
+        })
+        const text = new Text({
+          text: note.note.replace("#", "♯"),
+          style: textStyle,
+        })
+        text.anchor.set(0.5)
+        text.x = x
+        text.y = y
+        container.addChild(text)
+      }
     }
   }
 
@@ -180,7 +201,7 @@ function drawFretboard(app: Application) {
     const y = TOP_MARGIN + s * stringGap
     const label = new Text({ text: stringLabels[s], style: stringLabelStyle })
     label.anchor.set(1, 0.5)
-    label.x = LEFT_MARGIN - 10
+    label.x = LEFT_MARGIN - 36
     label.y = y
     container.addChild(label)
   }
@@ -209,6 +230,6 @@ function drawFretboard(app: Application) {
   container.addChild(nutLabel)
 }
 
-function formatNoteLabel(note: FretNote): string {
-  return note.note.replace("#", "♯")
+function cssHexToNumber(css: string): number {
+  return parseInt(css.replace("#", ""), 16)
 }

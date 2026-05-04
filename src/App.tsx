@@ -1,6 +1,5 @@
 import Header from "./components/Header"
 import ScalePanel from "./components/ScalePanel"
-import OpenStringPanel from "./components/OpenStringPanel"
 import FretboardCanvas from "./components/FretboardCanvas"
 import ChordPanel from "./components/ChordPanel"
 
@@ -9,7 +8,6 @@ export default function App() {
     <div className="min-h-screen pb-12">
       <Header />
       <ScalePanel />
-      <OpenStringPanel />
       <FretboardCanvas />
       <ChordPanel />
       <footer className="text-center text-xs text-stone-400 py-4">

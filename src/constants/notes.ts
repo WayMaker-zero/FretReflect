@@ -36,3 +36,11 @@ export function getOctaveAtFret(baseOctave: number, openNote: NoteName, fret: nu
   const idx = getNoteIndex(openNote) + fret
   return baseOctave + Math.floor(idx / 12)
 }
+
+export const ENHARMONIC_NAMES: Record<string, { sharp: string; flat: string }> = {
+  "C#": { sharp: "C♯", flat: "D♭" },
+  "D#": { sharp: "D♯", flat: "E♭" },
+  "F#": { sharp: "F♯", flat: "G♭" },
+  "G#": { sharp: "G♯", flat: "A♭" },
+  "A#": { sharp: "A♯", flat: "B♭" },
+}
