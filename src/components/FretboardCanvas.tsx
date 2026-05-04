@@ -172,7 +172,7 @@ function drawFretboard(app: Application) {
 
   for (let s = 0; s < 6; s++) {
     const y = TOP_MARGIN + s * stringGap
-    const stringNotes = allNotes[s]
+    const stringNotes = allNotes[5 - s]
 
     for (let f = 0; f <= FRET_COUNT; f++) {
       const note = stringNotes[f]
@@ -275,7 +275,7 @@ function drawChordOverlay(container: Container, chord: ChordDefinition) {
 
   for (let i = 0; i < 6; i++) {
     const fretValue = fingering[i]
-    const y = TOP_MARGIN + i * stringGap
+    const y = TOP_MARGIN + (5 - i) * stringGap
 
     if (fretValue !== null && fretValue > 0) {
       const x = LEFT_MARGIN + fretValue * fretWidth - fretWidth / 2
