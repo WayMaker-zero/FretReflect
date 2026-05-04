@@ -1,14 +1,35 @@
 import { useState } from "react"
-import { Music } from "lucide-react"
+import { Music, Eye, EyeOff } from "lucide-react"
 import { CHORD_LIST, CHORDS } from "../constants/chords"
 import { NOTE_LABEL_CN } from "../constants/notes"
 import { getNoteColor } from "../utils/fretboard"
 import type { ChordDefinition } from "../types"
 
-export default function ChordPanel() {
+interface ChordPanelProps {
+  projectedChord: ChordDefinition | null
+  onToggleProject: (chord: ChordDefinition | null) => void
+}
+
+export default function ChordPanel({ projectedChord, onToggleProject }: ChordPanelProps) {
   const [selected, setSelected] = useState<string>("C")
 
   const chord = CHORDS[selected]
+  const isProjecting = projectedChord !== null && projectedChord.name === selected
+
+  function handleSelect(name: string) {
+    setSelected(name)
+    if (projectedChord !== null) {
+      onToggleProject(CHORDS[name])
+    }
+  }
+
+  function handleToggle() {
+    if (isProjecting) {
+      onToggleProject(null)
+    } else {
+      onToggleProject(chord)
+    }
+  }
 
   return (
     <section className="max-w-4xl mx-auto px-4 mb-8">
@@ -18,20 +39,38 @@ export default function ChordPanel() {
       </h2>
       <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-5">
         <div className="flex flex-col lg:flex-row gap-5">
-          <div className="flex lg:flex-col gap-2 flex-wrap justify-center lg:min-w-[120px]">
-            {CHORD_LIST.map((c) => (
-              <button
-                key={c.name}
-                onClick={() => setSelected(c.name)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all
-                  ${selected === c.name
-                    ? "bg-amber-500 text-white shadow-md scale-105"
-                    : "bg-stone-100 text-stone-600 hover:bg-stone-200"
-                  }`}
-              >
-                {c.name}
-              </button>
-            ))}
+          <div className="flex flex-col items-center lg:min-w-[120px]">
+            <button
+              onClick={handleToggle}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all mb-3
+                ${isProjecting
+                  ? "bg-amber-500 text-white shadow-sm"
+                  : "bg-white border border-stone-300 text-stone-500 hover:border-amber-400 hover:text-amber-600"
+                }`}
+            >
+              {isProjecting ? (
+                <EyeOff className="w-3.5 h-3.5" />
+              ) : (
+                <Eye className="w-3.5 h-3.5" />
+              )}
+              {isProjecting ? "取消投射" : "投射到指板"}
+            </button>
+
+            <div className="flex lg:flex-col gap-2 flex-wrap justify-center">
+              {CHORD_LIST.map((c) => (
+                <button
+                  key={c.name}
+                  onClick={() => handleSelect(c.name)}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all
+                    ${selected === c.name
+                      ? "bg-amber-500 text-white shadow-md scale-105"
+                      : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                    }`}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex-1 flex flex-col items-center gap-4">

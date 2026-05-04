@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react"
 import { Application, Graphics, Text, TextStyle, Container } from "pixi.js"
 import { getAllFretNotes, FRET_COUNT } from "../constants/tuning"
 import { getNoteColor } from "../utils/fretboard"
+import type { ChordDefinition } from "../types"
 
 const FRETBOARD_COLOR = 0x5c3a21
 const FRET_COLOR = 0xd4c5b9
@@ -16,9 +17,22 @@ const BOTTOM_MARGIN = 16
 const INLAY_FRETS = [3, 5, 7, 9, 12]
 const DOUBLE_INLAY = [12]
 
-export default function FretboardCanvas() {
+const CHORD_MARKER_COLOR = 0xf59e0b
+const CHORD_MARKER_ALPHA = 0.9
+
+interface FretboardCanvasProps {
+  projectedChord: ChordDefinition | null
+}
+
+const fretAreaWidth = FRETBOARD_WIDTH - LEFT_MARGIN - 16
+const fretAreaHeight = FRETBOARD_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN
+const fretWidth = fretAreaWidth / (FRET_COUNT + 1)
+const stringGap = fretAreaHeight / 5
+
+export default function FretboardCanvas({ projectedChord }: FretboardCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
+  const chordLayerRef = useRef<Container | null>(null)
 
   useEffect(() => {
     let destroyed = false
@@ -58,6 +72,24 @@ export default function FretboardCanvas() {
     }
   }, [])
 
+  useEffect(() => {
+    const app = appRef.current
+    if (!app) return
+
+    if (chordLayerRef.current) {
+      app.stage.removeChild(chordLayerRef.current)
+      chordLayerRef.current.destroy({ children: true })
+      chordLayerRef.current = null
+    }
+
+    if (!projectedChord) return
+
+    const chordContainer = new Container()
+    drawChordOverlay(chordContainer, projectedChord)
+    app.stage.addChild(chordContainer)
+    chordLayerRef.current = chordContainer
+  }, [projectedChord])
+
   return (
     <section className="max-w-4xl mx-auto px-4 mb-8">
       <h2 className="text-lg font-semibold text-stone-700 mb-4 flex items-center gap-2">
@@ -78,11 +110,6 @@ export default function FretboardCanvas() {
 }
 
 function drawFretboard(app: Application) {
-  const fretAreaWidth = FRETBOARD_WIDTH - LEFT_MARGIN - 16
-  const fretAreaHeight = FRETBOARD_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN
-  const fretWidth = fretAreaWidth / (FRET_COUNT + 1)
-  const stringGap = fretAreaHeight / 5
-
   const allNotes = getAllFretNotes()
 
   const container = new Container()
@@ -228,6 +255,57 @@ function drawFretboard(app: Application) {
   nutLabel.x = LEFT_MARGIN
   nutLabel.y = TOP_MARGIN + fretAreaHeight + 6
   container.addChild(nutLabel)
+}
+
+function drawChordOverlay(container: Container, chord: ChordDefinition) {
+  const { fingering } = chord
+
+  for (let i = 0; i < 6; i++) {
+    const fretValue = fingering[i]
+    const y = TOP_MARGIN + i * stringGap
+
+    if (fretValue !== null && fretValue > 0) {
+      const x = LEFT_MARGIN + fretValue * fretWidth - fretWidth / 2
+
+      const ring = new Graphics()
+      ring.circle(x, y, 10)
+      ring.stroke({ color: CHORD_MARKER_COLOR, width: 2, alpha: CHORD_MARKER_ALPHA })
+      container.addChild(ring)
+
+      const dot = new Graphics()
+      dot.circle(x, y, 4)
+      dot.fill({ color: CHORD_MARKER_COLOR, alpha: CHORD_MARKER_ALPHA })
+      container.addChild(dot)
+
+    } else if (fretValue === 0) {
+      const indicatorStyle = new TextStyle({
+        fontSize: 14,
+        fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+        fontWeight: "700",
+        fill: "#f59e0b",
+        align: "center",
+      })
+      const indicator = new Text({ text: "○", style: indicatorStyle })
+      indicator.anchor.set(0.5)
+      indicator.x = LEFT_MARGIN - 20
+      indicator.y = y
+      container.addChild(indicator)
+
+    } else if (fretValue === null) {
+      const indicatorStyle = new TextStyle({
+        fontSize: 14,
+        fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+        fontWeight: "700",
+        fill: "#78716c",
+        align: "center",
+      })
+      const indicator = new Text({ text: "✕", style: indicatorStyle })
+      indicator.anchor.set(0.5)
+      indicator.x = LEFT_MARGIN - 20
+      indicator.y = y
+      container.addChild(indicator)
+    }
+  }
 }
 
 function cssHexToNumber(css: string): number {
