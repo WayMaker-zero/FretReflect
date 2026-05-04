@@ -1,0 +1,214 @@
+import { useEffect, useRef } from "react"
+import { Application, Graphics, Text, TextStyle, Container } from "pixi.js"
+import { getAllFretNotes, FRET_COUNT } from "../constants/tuning"
+import { getNoteColor } from "../utils/fretboard"
+import type { FretNote } from "../types"
+
+const FRETBOARD_COLOR = 0x5c3a21
+const FRET_COLOR = 0xd4c5b9
+const STRING_COLOR = 0xb8a99a
+const NUT_COLOR = 0xf5f0eb
+const FRETBOARD_WIDTH = 800
+const FRETBOARD_HEIGHT = 320
+const LEFT_MARGIN = 60
+const TOP_MARGIN = 32
+const BOTTOM_MARGIN = 16
+
+const INLAY_FRETS = [3, 5, 7, 9, 12]
+const DOUBLE_INLAY = [12]
+
+export default function FretboardCanvas() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const appRef = useRef<Application | null>(null)
+
+  useEffect(() => {
+    let destroyed = false
+
+    async function init() {
+      if (!containerRef.current) return
+
+      const app = new Application()
+      await app.init({
+        width: FRETBOARD_WIDTH,
+        height: FRETBOARD_HEIGHT,
+        backgroundColor: 0xfffbeb,
+        antialias: true,
+        resolution: window.devicePixelRatio || 1,
+        autoDensity: true,
+      })
+
+      if (destroyed) {
+        app.destroy(true, { children: true })
+        return
+      }
+
+      containerRef.current.appendChild(app.canvas)
+      appRef.current = app
+
+      drawFretboard(app)
+    }
+
+    init()
+
+    return () => {
+      destroyed = true
+      if (appRef.current) {
+        appRef.current.destroy(true, { children: true })
+        appRef.current = null
+      }
+    }
+  }, [])
+
+  return (
+    <section className="max-w-4xl mx-auto px-4 mb-8">
+      <h2 className="text-lg font-semibold text-stone-700 mb-4 flex items-center gap-2">
+        <span className="w-1.5 h-5 bg-blue-500 rounded-full inline-block" />
+        指板音位图 · {FRET_COUNT}品
+      </h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-4 overflow-x-auto">
+        <div
+          ref={containerRef}
+          className="min-w-[800px] flex justify-center"
+        />
+        <p className="text-center text-xs text-stone-400 mt-2">
+          横向 = 品丝　纵向 = 琴弦(上1弦最细 → 下6弦最粗)　圆圈内为音名
+        </p>
+      </div>
+    </section>
+  )
+}
+
+function drawFretboard(app: Application) {
+  const fretAreaWidth = FRETBOARD_WIDTH - LEFT_MARGIN - 16
+  const fretAreaHeight = FRETBOARD_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN
+  const fretWidth = fretAreaWidth / (FRET_COUNT + 1)
+  const stringGap = fretAreaHeight / 5
+
+  const allNotes = getAllFretNotes()
+
+  const container = new Container()
+  app.stage.addChild(container)
+
+  const board = new Graphics()
+  board.roundRect(LEFT_MARGIN - 4, TOP_MARGIN - 4, fretAreaWidth + 8, fretAreaHeight + 8, 6)
+  board.fill(FRETBOARD_COLOR)
+  container.addChild(board)
+
+  for (let f = 0; f <= FRET_COUNT; f++) {
+    const x = LEFT_MARGIN + f * fretWidth
+    const line = new Graphics()
+    if (f === 0) {
+      line.rect(x - 3, TOP_MARGIN - 6, 6, fretAreaHeight + 12)
+      line.fill(NUT_COLOR)
+    } else {
+      line.rect(x - 1, TOP_MARGIN, 2, fretAreaHeight)
+      line.fill(FRET_COLOR)
+    }
+    container.addChild(line)
+  }
+
+  for (let s = 0; s < 6; s++) {
+    const y = TOP_MARGIN + s * stringGap
+    const line = new Graphics()
+    line.roundRect(LEFT_MARGIN, y - (6 - s) * 0.5, fretAreaWidth, 1 + s * 0.3, 1)
+    line.fill({ color: STRING_COLOR, alpha: 0.8 })
+    container.addChild(line)
+  }
+
+  for (const fret of INLAY_FRETS) {
+    const x = LEFT_MARGIN + fret * fretWidth - fretWidth / 2
+    const y = TOP_MARGIN + fretAreaHeight / 2
+    const isDouble = DOUBLE_INLAY.includes(fret)
+
+    const dot = new Graphics()
+    if (isDouble) {
+      dot.circle(x, y - stringGap, 4)
+      dot.fill({ color: 0xf5f0eb, alpha: 0.6 })
+      const dot2 = new Graphics()
+      dot2.circle(x, y + stringGap, 4)
+      dot2.fill({ color: 0xf5f0eb, alpha: 0.6 })
+      container.addChild(dot)
+      container.addChild(dot2)
+    } else {
+      dot.circle(x, y, 4)
+      dot.fill({ color: 0xf5f0eb, alpha: 0.6 })
+      container.addChild(dot)
+    }
+  }
+
+  const noteStyle = new TextStyle({
+    fontSize: 9,
+    fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+    fontWeight: "600",
+    fill: "#ffffff",
+    align: "center",
+  })
+
+  for (let s = 0; s < 6; s++) {
+    const y = TOP_MARGIN + s * stringGap
+    const stringNotes = allNotes[s]
+
+    for (let f = 0; f <= FRET_COUNT; f++) {
+      const note = stringNotes[f]
+      const x = LEFT_MARGIN + f * fretWidth - fretWidth / 2
+      const color = getNoteColor(note.note)
+
+      const bg = new Graphics()
+      const radius = 9
+      bg.circle(x, y, radius)
+      bg.fill(color)
+      container.addChild(bg)
+
+      const text = new Text({ text: formatNoteLabel(note), style: noteStyle })
+      text.anchor.set(0.5)
+      text.x = x
+      text.y = y
+      container.addChild(text)
+    }
+  }
+
+  const stringLabelStyle = new TextStyle({
+    fontSize: 11,
+    fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+    fontWeight: "500",
+    fill: "#78716c",
+    align: "right",
+  })
+
+  const stringLabels = ["1弦", "2弦", "3弦", "4弦", "5弦", "6弦"]
+  for (let s = 0; s < 6; s++) {
+    const y = TOP_MARGIN + s * stringGap
+    const label = new Text({ text: stringLabels[s], style: stringLabelStyle })
+    label.anchor.set(1, 0.5)
+    label.x = LEFT_MARGIN - 10
+    label.y = y
+    container.addChild(label)
+  }
+
+  const fretLabelStyle = new TextStyle({
+    fontSize: 10,
+    fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+    fontStyle: "italic",
+    fill: "#78716c",
+    align: "center",
+  })
+
+  for (let f = 1; f <= FRET_COUNT; f++) {
+    const x = LEFT_MARGIN + f * fretWidth - fretWidth / 2
+    const label = new Text({ text: `${f}`, style: fretLabelStyle })
+    label.anchor.set(0.5, 0)
+    label.x = x
+    label.y = TOP_MARGIN + fretAreaHeight + 6
+    container.addChild(label)
+  }
+
+  const nutLabel = new Text({ text: "琴枕", style: fretLabelStyle })
+  nutLabel.anchor.set(0.5, 0)
+  nutLabel.x = LEFT_MARGIN
+  nutLabel.y = TOP_MARGIN + fretAreaHeight + 6
+  container.addChild(nutLabel)
+}
+
+function formatNoteLabel(note: FretNote): string {
+  return note.note.replace("#", "♯")
+}
