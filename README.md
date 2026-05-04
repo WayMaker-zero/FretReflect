@@ -24,6 +24,8 @@
 
 ## 如何使用
 
+> 在线访问：[waymaker-zero.github.io/FretReflect](https://waymaker-zero.github.io/FretReflect/)
+
 1. 打开网页即可浏览全部内容
 2. 在「常见和弦」板块选择和弦，查看构成音和指法
 3. 点击「投射」按钮，观察该和弦在指板上的按法位置和音阶中的构成音
@@ -56,6 +58,8 @@ Tap the "Project" button to overlay the selected chord's fingering onto the fret
 ---
 
 ## How to Use
+
+> Visit: [waymaker-zero.github.io/FretReflect](https://waymaker-zero.github.io/FretReflect/)
 
 1. Open the page to browse all content
 2. Select a chord in the "Common Chords" section to view its notes and fingering
