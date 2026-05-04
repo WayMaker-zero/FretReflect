@@ -11,7 +11,7 @@ export default function App() {
   return (
     <div className="min-h-screen pb-12">
       <Header />
-      <ScalePanel />
+      <ScalePanel projectedChord={projectedChord} />
       <FretboardCanvas projectedChord={projectedChord} />
       <ChordPanel
         projectedChord={projectedChord}

@@ -53,7 +53,7 @@ export default function ChordPanel({ projectedChord, onToggleProject }: ChordPan
               ) : (
                 <Eye className="w-3.5 h-3.5" />
               )}
-              {isProjecting ? "取消投射" : "投射到指板"}
+              {isProjecting ? "取消" : "投射"}
             </button>
 
             <div className="flex lg:flex-col gap-2 flex-wrap justify-center">
